@@ -52,12 +52,12 @@ func handleQuery(ctx context.Context, req mcp.CallToolRequest, db *sql.DB) (*mcp
 	}
 
 	// Prepare result
-	var results []map[string]interface{}
+	var results []map[string]any
 
 	for rows.Next() {
 		// Create a slice of interface{} to hold the values
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
+		values := make([]any, len(columns))
+		valuePtrs := make([]any, len(columns))
 
 		for i := range columns {
 			valuePtrs[i] = &values[i]
@@ -69,7 +69,7 @@ func handleQuery(ctx context.Context, req mcp.CallToolRequest, db *sql.DB) (*mcp
 		}
 
 		// Create a map for this row
-		rowMap := make(map[string]interface{})
+		rowMap := make(map[string]any)
 
 		for i, col := range columns {
 			val := values[i]
