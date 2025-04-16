@@ -39,7 +39,7 @@ func handleQuery(ctx context.Context, req mcp.CallToolRequest, db *sql.DB) (*mcp
 	}
 
 	// Execute the query with parameters
-	rows, err := db.Query(statement, args)
+	rows, err := db.Query(statement, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %v", err)
 	}
