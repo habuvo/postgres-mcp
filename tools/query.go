@@ -18,7 +18,7 @@ func RegisterQueryTool(s *server.MCPServer, db *sql.DB) {
 		),
 		mcp.WithArray("arguments",
 			mcp.Required(),
-			mcp.Description("Arguments for the statent provided"),
+			mcp.Description("Arguments for the statement provided"),
 		),
 	)
 
