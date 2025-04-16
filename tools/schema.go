@@ -37,7 +37,7 @@ func handleSchema(ctx context.Context, request mcp.CallToolRequest, db *sql.DB) 
 		ORDER BY ordinal_position
 	`
 
-	rows, err := db.Query(query, tableName)
+	rows, err := db.QueryContext(ctx, query, tableName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute schema query: %v", err)
 	}
