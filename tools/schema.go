@@ -9,21 +9,35 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-func RegisterSchemaTool(s *server.MCPServer, db *sql.DB) {
+func RegisterSchemaTool(s *server.MCPServer, dbs map[string]*sql.DB) {
 	schemaTool := mcp.NewTool("schema_tool",
-		mcp.WithDescription("Inspect the table schema"),
+		mcp.WithDescription("Inspect table schema on specified database"),
+		mcp.WithString("database",
+			mcp.Required(),
+			mcp.Description("Name of the database to inspect"),
+		),
 		mcp.WithString("table_name",
 			mcp.Required(),
 			mcp.Description("The name of the table to inspect"),
 		))
 
 	s.AddTool(schemaTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleSchema(ctx, request, db)
+		return handleSchema(ctx, request, dbs)
 	})
 }
 
 // Execute handles the schema request
-func handleSchema(ctx context.Context, request mcp.CallToolRequest, db *sql.DB) (*mcp.CallToolResult, error) {
+func handleSchema(ctx context.Context, request mcp.CallToolRequest, dbs map[string]*sql.DB) (*mcp.CallToolResult, error) {
+	database, ok := request.Params.Arguments["database"].(string)
+	if !ok {
+		return nil, fmt.Errorf("database parameter should be a string")
+	}
+
+	db, exists := dbs[database]
+	if !exists {
+		return nil, fmt.Errorf("database '%s' not found in available connections", database)
+	}
+
 	tableName, ok := request.Params.Arguments["table_name"].(string)
 	if !ok || tableName == "" {
 		return nil, fmt.Errorf("table_name must be a non-empty string")

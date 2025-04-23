@@ -18,15 +18,49 @@ const (
 
 // Config holds the database configuration.
 type Config struct {
-	Host     string
-	Port     string
-	Name     string
-	User     string
-	Password string
-	SSLMode  string
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Name     string `json:"name"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	SSLMode  string `json:"sslmode"`
 }
 
-// LoadConfig loads the configuration from environment variables.
+// LoadConfigs loads multiple database configurations from a JSON string in environment variable.
+func LoadConfigs(envVar string) (map[string]Config, error) {
+	jsonConfig := os.Getenv(envVar)
+	if jsonConfig == "" {
+		return nil, fmt.Errorf("environment variable %s is empty", envVar)
+	}
+
+	var configs map[string]Config
+	err := json.Unmarshal([]byte(jsonConfig), &configs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JSON config: %v", err)
+	}
+
+	// Validate each config
+	for name, cfg := range configs {
+		if cfg.Name == "" || cfg.User == "" || cfg.Password == "" {
+			return nil, fmt.Errorf("missing required fields in config for database %s", name)
+		}
+		// Set defaults
+		if cfg.Host == "" {
+			cfg.Host = "localhost"
+		}
+		if cfg.Port == "" {
+			cfg.Port = "5432"
+		}
+		if cfg.SSLMode == "" {
+			cfg.SSLMode = "disable"
+		}
+		configs[name] = cfg
+	}
+
+	return configs, nil
+}
+
+// LoadConfig loads a single database configuration from environment variables.
 func LoadConfig() (*Config, error) {
 	// Load .env file if it exists
 	godotenv.Load()
