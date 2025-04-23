@@ -11,10 +11,10 @@ import (
 
 func RegisterExecuteTool(s *server.MCPServer, db *sql.DB) {
 	executeTool := mcp.NewTool("execute_tool",
-		mcp.WithDescription("Execute statement"),
+		mcp.WithDescription("Execute a single SQL statement or multiple statements separated by semicolons (;). Only one string is accepted per tool execution."),
 		mcp.WithString("statement",
 			mcp.Required(),
-			mcp.Description("Statement to be executed"),
+			mcp.Description("SQL statement(s) to execute. For multiple statements, separate them with semicolons (;). Only one string is accepted per tool execution."),
 		),
 		mcp.WithArray("arguments",
 			mcp.Required(),
