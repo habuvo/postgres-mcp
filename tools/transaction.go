@@ -9,26 +9,40 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-func RegisterTransactionTool(s *server.MCPServer, db *sql.DB) {
+func RegisterTransactionTool(s *server.MCPServer, dbs map[string]*sql.DB) {
 	transactionTool := mcp.NewTool("transaction_tool",
-		mcp.WithDescription("Make queries in a transaction"),
+		mcp.WithDescription("Execute queries in a transaction on specified database"),
+		mcp.WithString("database",
+			mcp.Required(),
+			mcp.Description("Name of the database for the transaction"),
+		),
 		mcp.WithArray("statements",
 			mcp.Required(),
 			mcp.Description("Statements to be executed in the transaction"),
 		),
 		mcp.WithArray("arguments",
 			mcp.Required(),
-			mcp.Description("Arguments for the statents provided"),
+			mcp.Description("Arguments for the statements provided"),
 		),
 	)
 
 	s.AddTool(transactionTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleTransaction(ctx, request, db)
+		return handleTransaction(ctx, request, dbs)
 	})
 }
 
-// Execute handles the schema request.
-func handleTransaction(ctx context.Context, request mcp.CallToolRequest, db *sql.DB) (*mcp.CallToolResult, error) {
+// Execute handles the transaction request.
+func handleTransaction(ctx context.Context, request mcp.CallToolRequest, dbs map[string]*sql.DB) (*mcp.CallToolResult, error) {
+	database, ok := request.Params.Arguments["database"].(string)
+	if !ok {
+		return nil, fmt.Errorf("database parameter should be a string")
+	}
+
+	db, exists := dbs[database]
+	if !exists {
+		return nil, fmt.Errorf("database '%s' not found in available connections", database)
+	}
+
 	statements, ok := request.Params.Arguments["statements"].([]string)
 	if !ok {
 		return nil, fmt.Errorf("statements should be an array of strings")

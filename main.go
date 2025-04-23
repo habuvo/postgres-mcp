@@ -10,20 +10,29 @@ import (
 )
 
 func main() {
-	// Load configuration
-	cfg, err := config.LoadConfig()
+	// Load configurations
+	configs, err := config.LoadConfigs("POSTGRES_DBS")
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		log.Fatalf("Failed to load configurations: %v", err)
 	}
 
-	// Connect to the database
-	db, err := config.ConnectDB(cfg)
+	// Connect to all databases
+	dbs, err := config.ConnectDBs(configs)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		log.Printf("Warning: some database connections failed: %v", err)
+		if len(dbs) == 0 {
+			log.Fatal("No database connections established")
+		}
 	}
-	defer db.Close()
 
-	log.Println("Successfully connected to the PostgreSQL database!")
+	// Close all connections on exit
+	defer func() {
+		for _, db := range dbs {
+			db.Close()
+		}
+	}()
+
+	log.Printf("Successfully connected to %d PostgreSQL database(s)!", len(dbs))
 
 	// Initialize the MCP server
 	s := server.NewMCPServer(
@@ -32,11 +41,11 @@ func main() {
 		server.WithLogging(),
 	)
 
-	// Register the PostgreSQL tools
-	tools.RegisterExecuteTool(s, db)
-	tools.RegisterQueryTool(s, db)
-	tools.RegisterSchemaTool(s, db)
-	tools.RegisterTransactionTool(s, db)
+	// Register the PostgreSQL tools with all databases
+	tools.RegisterExecuteTool(s, dbs)
+	tools.RegisterQueryTool(s, dbs)
+	tools.RegisterSchemaTool(s, dbs)
+	tools.RegisterTransactionTool(s, dbs)
 
 	// Start the server
 	log.Println("Starting MCP server...")

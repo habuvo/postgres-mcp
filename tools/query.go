@@ -9,25 +9,39 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-func RegisterQueryTool(s *server.MCPServer, db *sql.DB) {
+func RegisterQueryTool(s *server.MCPServer, dbs map[string]*sql.DB) {
 	queryTool := mcp.NewTool("query_tool",
-		mcp.WithDescription("Make query"),
+		mcp.WithDescription("Execute SQL query on specified database"),
+		mcp.WithString("database",
+			mcp.Required(),
+			mcp.Description("Name of the database to query"),
+		),
 		mcp.WithString("statement",
 			mcp.Required(),
-			mcp.Description("Statement to be executed"),
+			mcp.Description("SQL query to execute"),
 		),
 		mcp.WithArray("arguments",
 			mcp.Required(),
-			mcp.Description("Arguments for the statement provided"),
+			mcp.Description("Arguments for the query provided"),
 		),
 	)
 
 	s.AddTool(queryTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		return handleQuery(ctx, request, db)
+		return handleQuery(ctx, request, dbs)
 	})
 }
 
-func handleQuery(ctx context.Context, req mcp.CallToolRequest, db *sql.DB) (*mcp.CallToolResult, error) {
+func handleQuery(ctx context.Context, req mcp.CallToolRequest, dbs map[string]*sql.DB) (*mcp.CallToolResult, error) {
+	database, ok := req.Params.Arguments["database"].(string)
+	if !ok {
+		return nil, fmt.Errorf("database parameter should be a string")
+	}
+
+	db, exists := dbs[database]
+	if !exists {
+		return nil, fmt.Errorf("database '%s' not found in available connections", database)
+	}
+
 	statement, ok := req.Params.Arguments["statement"].(string)
 	if !ok {
 		return nil, fmt.Errorf("statement should be a string")
