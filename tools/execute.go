@@ -53,7 +53,7 @@ func handleExecute(ctx context.Context, req mcp.CallToolRequest, dbs map[string]
 	}
 
 	// Execute the statement
-	result, err := db.Exec(statement, args)
+	result, err := db.ExecContext(ctx, statement, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute statement: %v", err)
 	}

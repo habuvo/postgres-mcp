@@ -62,7 +62,7 @@ func handleTransaction(ctx context.Context, request mcp.CallToolRequest, dbs map
 	}
 
 	// Start a transaction
-	tx, err := db.Begin()
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %v", err)
 	}
