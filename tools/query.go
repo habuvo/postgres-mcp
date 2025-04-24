@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -97,5 +98,10 @@ func handleQuery(ctx context.Context, req mcp.CallToolRequest, db *sql.DB) (*mcp
 	}
 
 	// Set response data
-	return mcp.NewToolResultText(fmt.Sprintf("rows: %s columns: %s, rowCount: %d", results, columns, len(results))), nil
+	resultJSON, err := json.Marshal(results)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal results to JSON: %v", err)
+	}
+
+	return mcp.NewToolResultText(string(resultJSON)), nil
 }
